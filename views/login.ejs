@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+    <head>
+        <meta charset="utf-8">
+        <meta content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>Login</title>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
+    </head>
+    <main class="container font-monospace">
+        <article>
+            <h2>Login</h2>
+            <details>
+                <summary><mark>Current time</mark></summary>
+                <p><%=time%></p>    
+            </details>
+        </article>
+        <section>
+            <form>
+                <fieldset>
+                    <legend>Login</legend>
+                    <div>
+                        <label for="username">Username</label>
+                        <input id="username" type="text" placeholder="Input username">
+                    </div>
+                    <div>
+                        <label for="password">Password</label>
+                        <input id="password" type="password" placeholder="Input password"> 
+                    </div>
+                    <input type="submit" title="Login" id="login-btn">
+                </fieldset>
+            </form>
+        </section>
+    </main>
+    <script>
+        document.getElementById("login-btn").addEventListener('click', async (event) => {
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const resiger = await fetch("/login", {
+                method: "POST", 
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({username: username, password: password})
+            });
+            const response = await resiger.json();
+            console.log(response);
+            if (response.message == "Success login"){
+                alert("Success login");
+                window.location.href = "/search";
+            }else {
+                alert("Error password or username");
+            }
+        });
+    </script>
+</html>

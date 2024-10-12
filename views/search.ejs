@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <title>Search</title>
+</head>
+
+<body>
+    <main style="width:fit-content;" class="container font-monospace main-content">
+        <h3 class="card-title text-center">Search Username To Get Password</h3>
+        <fieldset>
+            <legend class="h5">Find your user name</legend>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" placeholder="username to find" id="userfind">
+                <button id="find" class="btn btn-primary">Find</button>
+            </div>
+            <div class="form-group">
+                <div class="form-group">
+                    <label for="name-add">Username add avatar</label>
+                    <input id="name-add" type="text" placeholder="username" name="username" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label for="upload-img">Chose image</label>
+                    <input id="upload-img" type="file" title="Upload Image" name="image" class="form-control-file" />
+                </div>
+                <button id="submit-img" type="submit" class="btn btn-secondary">Upload</button>
+            </div>
+        </fieldset>
+        <fieldset style="gap: 2px;">
+            <legend class="h5">User you find</legend>
+            <div>
+                <ul id="list-user">
+                    <li>Username: X || password: X</li>
+                </ul>
+            </div>
+        </fieldset>
+        <fieldset style="gap: 2px;">
+            <legend class="h5">List user we have</legend>
+            <div>
+                <ul id="listUser">
+                </ul>
+            </div>
+            <div id="page" class="btn-group">
+       
+            </div>
+        </fieldset>
+        <fieldset style="gap: 2px;">
+            <legend class="h5">List image upload</legend>
+            <div>
+                <ul id="listImage">
+
+                </ul>
+            </div>
+        </fieldset>
+    </main>
+</body>
+<%- include('partialviews/footer'); %>
+    <script>
+        window.addEventListener("DOMContentLoaded", async () => {
+            await fetchAndDisplayData(1);
+        });
+
+        async function fetchAndDisplayData(currentPage) {
+            const fetchData = await fetch(`/get-data?page=${currentPage}&limit=3`, {
+                method: "GET",
+            });
+            const listData = await fetchData.json();
+            const listUser = document.getElementById('listUser');
+            const listImage = document.getElementById('listImage');
+            listUser.innerHTML = '';
+            listImage.innerHTML = '';
+            listData.data.forEach((user) => {
+                let li1 = document.createElement('li');
+                let li2 = document.createElement('li');
+                let img = document.createElement('img');
+
+                img.src = "node-buoi2/public/images/" + user.image;
+                img.width = 100;
+                img.height = 100;
+                img.title = user.username;
+                img.alt = user.username;
+
+                li1.textContent = `Username: ${user.username}`;
+                listUser.appendChild(li1);
+                li2.appendChild(img);
+                listImage.appendChild(li2);
+            });
+
+            const containPage = document.getElementById('page');
+            containPage.innerHTML = ''; // Xóa các nút phân trang cũ
+
+            for (let i = 1; i <= listData.totalPage; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.textContent = i; // Sử dụng số trang
+                btn.onclick = () => changePage(i); // Sử dụng hàm arrow function
+                containPage.appendChild(btn);
+            }
+        }
+
+        async function changePage(currentPage) {
+            await fetchAndDisplayData(currentPage); // Gọi lại hàm để tải dữ liệu mới
+        }
+
+        document.getElementById('find').addEventListener('click', () => {
+            const userfind = document.getElementById("userfind").value;
+            fetch("/search", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username: userfind })
+            }).then((response) => {
+                return response.json();
+            }).then((data) => {
+                if (data.data != undefined) {
+                    const container = document.getElementById('list-user');
+                    container.innerText = '';
+                    const li = document.createElement('li');
+                    li.textContent = `Username: ${data.data.username} || password: ${data.data.password}`;
+                    container.appendChild(li);
+                } else {
+                    alert("NOT FOUND !");
+                }
+            });
+        });
+        document.getElementById('submit-img').addEventListener('click', async () => {
+            const inputFile = document.getElementById('upload-img');
+            const username = document.getElementById('name-add').value;
+            if (!username) {
+                alert("Please insert user name");
+                return;
+            }
+            if (inputFile.files.length > 0) {
+                const file = inputFile.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('username', username);
+                const waitUpload = await fetch("/upload", {
+                    method: "POST",
+                    body: formData
+                });
+                const response = await waitUpload.json();
+                if (response.message == 'Upload success') {
+                    alert("Image upload success");
+                    console.log(response.data);
+                    const listImage = document.getElementById('listImage');
+                    listImage.innerHTML = '';
+                    const data = response.data;
+                    data.forEach((user) => {
+                        let li = document.createElement('li');
+                        let img = document.createElement('img');
+                        img.src = "node-buoi2/public/images/" + user.image;
+                        img.height = 100;
+                        img.width = 100;
+                        img.title = user.username;
+                        img.alt = user.username;
+                        li.appendChild(img);
+                        listImage.appendChild(li);
+                    });
+                }
+            } else {
+                alert("File not found !");
+            }
+        })
+    </script>
+
+    </html>
